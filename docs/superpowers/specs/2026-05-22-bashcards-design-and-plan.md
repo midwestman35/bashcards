@@ -290,7 +290,7 @@ Recommended Rust module structure:
 - `modes::escape_room`: rooms, objects, navigation, puzzle state.
 - `modes::dojo`: decks, drills, streaks, spaced review hooks.
 - `modes::ops_sim`: incident flows, sandbox lifecycle, applied validation.
-- `content`: loading, parsing, and validating TOML/YAML challenge files.
+- `content`: loading, parsing, and validating TOML challenge files.
 - `shell`: simulated command runner and real sandbox runner.
 - `validation`: validators for commands, outputs, and filesystem state.
 - `profile`: persistence for settings, progress, and stats.
