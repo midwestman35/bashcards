@@ -1,0 +1,17 @@
+[package]
+name = "bashcards"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+crossterm = "0.29"
+directories = "6"
+ratatui = "0.29"
+serde = { version = "1", features = ["derive"] }
+tempfile = "3"
+thiserror = "2"
+toml = "0.9"
+
+[dev-dependencies]
+assert_fs = "1"
