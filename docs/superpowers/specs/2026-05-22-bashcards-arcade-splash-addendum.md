@@ -1,3 +1,11 @@
+> **Superseded by `docs/superpowers/specs/design-overhaul/2026-05-23-bashcards-arcade-overhaul-design.md`.**
+>
+> This document predates the arcade overhaul. Its weekly-schedule framing
+> (Mon–Sun cabinet menu) was rejected in favor of a topic-cabinet arcade
+> model where each cabinet is a standalone topic game. The vapor-console
+> palette and boot-line concept survive — pulled forward into the new spec
+> and `docs/visual-design.md`. Kept on disk for history.
+
 # bashcards Arcade Splash and Lobby Addendum
 
 ## Decision
