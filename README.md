@@ -22,6 +22,23 @@ cargo run
 From the repository root:
 
 ```powershell
+python setup.py
+```
+
+The setup script builds a release binary and copies it to a user-local install
+directory. It also prints a PATH hint if that directory is not already available
+from your terminal.
+
+For a zip that already contains a prebuilt binary, install that binary without
+requiring Rust:
+
+```powershell
+python setup.py --binary .\bashcards.exe
+```
+
+You can also install directly through Cargo:
+
+```powershell
 cargo install --path .
 ```
 
