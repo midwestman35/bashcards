@@ -1,0 +1,47 @@
+[cabinet]
+id = "shell-motel"
+display_name = "Shell Motel"
+tagline = "a hallway asks where you are"
+glyph = "\u25A6"
+genre = "escape_room"
+
+[cabinet.theme]
+accent_primary = "#ff9ad2"
+accent_secondary = "#8af0ff"
+
+[[chapters]]
+id = "lost-terminal"
+title = "Lost Terminal"
+
+[[chapters.rooms]]
+id = "shell-motel-101"
+title = "Shell Motel Room 101"
+scene = "The door has no handle. It has a prompt."
+
+[[chapters.rooms.objectives]]
+id = "state-location"
+prompt = "State your location."
+success = "Objective complete: you found your current location."
+hints = ["`pwd` prints the current directory."]
+validator = { type = "ExactCommand", expected = "pwd" }
+
+[[chapters.rooms.objectives]]
+id = "list-room"
+prompt = "List what the room contains."
+success = "A lobby directory flickers into view."
+hints = ["Use `ls` to list entries."]
+validator = { type = "ExactCommand", expected = "ls" }
+
+[[chapters.rooms.objectives]]
+id = "enter-lobby"
+prompt = "Move into the lobby directory."
+success = "The lobby accepts your relative path."
+hints = ["Use `cd lobby`."]
+validator = { type = "ExactCommand", expected = "cd lobby" }
+
+[[chapters.rooms.objectives]]
+id = "read-lobby-readme"
+prompt = "Read the lobby README."
+success = "The README coughs up a clue. Manny Page says this counts as literature."
+hints = ["Use `cat README` to print the file."]
+validator = { type = "ExactCommand", expected = "cat README" }

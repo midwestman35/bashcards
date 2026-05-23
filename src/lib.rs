@@ -1,4 +1,6 @@
+pub mod animation;
 pub mod app;
+pub mod arcade;
 pub mod content;
 pub mod effects;
 pub mod game;
@@ -8,5 +10,6 @@ pub mod profile;
 pub mod settings;
 pub mod shell;
 pub mod telemetry_local;
+pub mod theme;
 pub mod ui;
 pub mod validation;

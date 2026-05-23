@@ -1,10 +1,22 @@
+use bashcards::arcade::Cabinet;
 use bashcards::content::ContentLibrary;
 use bashcards::validation::{ValidationResult, validate_exact};
 
 #[test]
 fn parses_chapter_rooms_decks_incidents_from_toml() {
     let content = ContentLibrary::from_toml_str(
-        r#"
+        r##"
+        [cabinet]
+        id = "shell-motel"
+        display_name = "Shell Motel"
+        tagline = "a hallway asks where you are"
+        glyph = "C"
+        genre = "escape_room"
+
+        [cabinet.theme]
+        accent_primary = "#ff9ad2"
+        accent_secondary = "#8af0ff"
+
         [[chapters]]
         id = "lost-terminal"
         title = "Lost Terminal"
@@ -37,7 +49,7 @@ fn parses_chapter_rooms_decks_incidents_from_toml() {
         title = "Moonbase Helpdesk"
         prompt = "Find the misplaced report."
         objective = { id = "inspect-report", prompt = "Read report.txt", success = "Report found.", hints = ["cat reads files."], validator = { type = "ExactCommand", expected = "cat report.txt" } }
-        "#,
+        "##,
     )
     .expect("content parses");
 
@@ -62,7 +74,7 @@ fn exact_command_validation_trims_whitespace_and_explains_near_miss() {
 
 #[test]
 fn bundled_content_covers_lost_terminal_beginner_commands() {
-    let content = ContentLibrary::bundled().expect("bundled content");
+    let content = ContentLibrary::bundled_for(Cabinet::ShellMotel).expect("bundled content");
     let chapter = &content.chapters()[0];
     let room_commands: Vec<_> = chapter.rooms[0]
         .objectives

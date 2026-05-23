@@ -1,9 +1,29 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+use crate::{arcade::Cabinet, modes::CabinetGenre};
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ContentLibrary {
     #[serde(default)]
+    cabinet: Option<CabinetManifest>,
+    #[serde(default)]
     chapters: Vec<Chapter>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CabinetManifest {
+    pub id: String,
+    pub display_name: String,
+    pub tagline: String,
+    pub glyph: String,
+    pub genre: CabinetGenre,
+    pub theme: CabinetTheme,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CabinetTheme {
+    pub accent_primary: String,
+    pub accent_secondary: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -91,8 +111,16 @@ impl ContentLibrary {
         Ok(library)
     }
 
+    pub fn bundled_for(cabinet: Cabinet) -> anyhow::Result<Self> {
+        Self::from_toml_str(cabinet.manifest_toml())
+    }
+
     pub fn bundled() -> anyhow::Result<Self> {
-        Self::from_toml_str(include_str!("../content/lost_terminal.toml"))
+        Self::bundled_for(Cabinet::ShellMotel)
+    }
+
+    pub fn cabinet(&self) -> Option<&CabinetManifest> {
+        self.cabinet.as_ref()
     }
 
     pub fn chapters(&self) -> &[Chapter] {
@@ -135,16 +163,27 @@ impl ContentLibrary {
     }
 
     fn validate(&self) -> anyhow::Result<()> {
+        let Some(cabinet) = self.cabinet.as_ref() else {
+            anyhow::bail!("cabinet manifest must include a [cabinet] block");
+        };
+        if Cabinet::from_id(&cabinet.id).is_none() {
+            anyhow::bail!("unknown cabinet id `{}`", cabinet.id);
+        }
         if self.chapters.is_empty() {
             anyhow::bail!("content library must include at least one chapter");
         }
         for chapter in &self.chapters {
-            if chapter.rooms.is_empty() || chapter.decks.is_empty() || chapter.incidents.is_empty()
-            {
-                anyhow::bail!(
-                    "chapter `{}` must include rooms, decks, and incidents",
-                    chapter.id
-                );
+            match cabinet.genre {
+                CabinetGenre::EscapeRoom if chapter.rooms.is_empty() => {
+                    anyhow::bail!("escape-room cabinet `{}` must include rooms", cabinet.id)
+                }
+                CabinetGenre::Dojo if chapter.decks.is_empty() => {
+                    anyhow::bail!("dojo cabinet `{}` must include decks", cabinet.id)
+                }
+                CabinetGenre::OpsSim if chapter.incidents.is_empty() => {
+                    anyhow::bail!("ops-sim cabinet `{}` must include incidents", cabinet.id)
+                }
+                _ => {}
             }
         }
         Ok(())

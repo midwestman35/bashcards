@@ -1,27 +1,11 @@
 use crate::{
+    arcade::Cabinet,
     content::Objective,
     settings::{Difficulty, PressureProfile, Settings},
     shell::{CommandWorld, Sandbox, run_guided},
     validation::{ValidationResult, validate_command},
 };
 use std::path::Path;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Mode {
-    EscapeRoom,
-    Dojo,
-    OpsSim,
-}
-
-impl Mode {
-    pub fn label(self) -> &'static str {
-        match self {
-            Self::EscapeRoom => "Escape Room",
-            Self::Dojo => "Dojo Drills",
-            Self::OpsSim => "Ops Sim",
-        }
-    }
-}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AttemptOutcome {
@@ -30,8 +14,8 @@ pub enum AttemptOutcome {
     Blocked { feedback: String },
 }
 
-pub struct GameSession {
-    pub mode: Mode,
+pub struct CabinetSession {
+    cabinet: Cabinet,
     pub difficulty: Difficulty,
     pub settings: Settings,
     objectives: Vec<Objective>,
@@ -46,10 +30,10 @@ pub struct GameSession {
     completed: bool,
 }
 
-impl GameSession {
-    pub fn empty(mode: Mode, difficulty: Difficulty, settings: Settings) -> Self {
+impl CabinetSession {
+    pub fn empty(cabinet: Cabinet, difficulty: Difficulty, settings: Settings) -> Self {
         Self {
-            mode,
+            cabinet,
             difficulty,
             settings,
             objectives: Vec::new(),
@@ -66,13 +50,13 @@ impl GameSession {
     }
 
     pub fn new(
-        mode: Mode,
+        cabinet: Cabinet,
         difficulty: Difficulty,
         settings: Settings,
         objectives: Vec<Objective>,
     ) -> Self {
         Self {
-            mode,
+            cabinet,
             difficulty,
             settings,
             objectives,
@@ -86,6 +70,10 @@ impl GameSession {
             sandbox: None,
             completed: false,
         }
+    }
+
+    pub fn cabinet(&self) -> Cabinet {
+        self.cabinet
     }
 
     pub fn attach_operator_sandbox(&mut self) -> anyhow::Result<()> {

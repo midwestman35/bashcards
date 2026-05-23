@@ -1,4 +1,10 @@
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::theme::ThemeToken;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Difficulty {
     Beginner,
     Builder,
@@ -17,7 +23,7 @@ impl Difficulty {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PressureProfile {
     CozyNoTimer,
     SoftUrgency,
@@ -42,7 +48,7 @@ impl PressureProfile {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AnimationSpeed {
     Calm,
     Normal,
@@ -67,7 +73,7 @@ impl AnimationSpeed {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HintStyle {
     Direct,
     Nudging,
@@ -92,7 +98,7 @@ impl HintStyle {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ExplainAfterSuccess {
     Always,
     FirstTimeOnly,
@@ -117,7 +123,12 @@ impl ExplainAfterSuccess {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ThemeOverride {
+    pub accent_primary: ThemeToken,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Settings {
     pub pressure: PressureProfile,
     pub reduced_motion: bool,
@@ -126,6 +137,7 @@ pub struct Settings {
     pub hint_style: HintStyle,
     pub explain_after_success: ExplainAfterSuccess,
     pub session_length_target: usize,
+    pub theme_overrides: HashMap<String, ThemeOverride>,
 }
 
 impl Default for Settings {
@@ -138,6 +150,7 @@ impl Default for Settings {
             hint_style: HintStyle::Nudging,
             explain_after_success: ExplainAfterSuccess::FirstTimeOnly,
             session_length_target: 10,
+            theme_overrides: HashMap::new(),
         }
     }
 }

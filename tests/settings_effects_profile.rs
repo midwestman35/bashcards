@@ -1,4 +1,6 @@
-use bashcards::effects::{EffectKind, cues_for_success, gradient_cells};
+use bashcards::animation::Cue;
+use bashcards::arcade::Cabinet;
+use bashcards::effects::{cues_for_success, gradient_cells};
 use bashcards::profile::Profile;
 use bashcards::settings::{
     AnimationSpeed, ExplainAfterSuccess, HintStyle, PressureProfile, Settings,
@@ -18,31 +20,26 @@ fn default_settings_match_first_build_product_defaults() {
         ExplainAfterSuccess::FirstTimeOnly
     );
     assert_eq!(settings.session_length_target, 10);
+    assert!(settings.theme_overrides.is_empty());
 }
 
 #[test]
 fn reduced_motion_replaces_sweep_flicker_and_reveal_with_static_success_cues() {
     let animated = cues_for_success(&Settings::default());
-    assert!(
-        animated
-            .iter()
-            .any(|cue| cue.kind == EffectKind::SuccessGradient)
-    );
-    assert!(animated.iter().any(|cue| cue.kind == EffectKind::Sweep));
-    assert!(animated.iter().any(|cue| cue.kind == EffectKind::Reveal));
-    assert!(animated.iter().any(|cue| cue.kind == EffectKind::Flicker));
+    assert!(animated.contains(&Cue::CorrectGlow));
+    assert!(animated.contains(&Cue::TitleSweep));
+    assert!(animated.contains(&Cue::PromptReveal));
+    assert!(animated.contains(&Cue::IncorrectFlicker));
 
-    let mut reduced = Settings::default();
-    reduced.reduced_motion = true;
+    let reduced = Settings {
+        reduced_motion: true,
+        ..Settings::default()
+    };
     let cues = cues_for_success(&reduced);
-    assert!(cues.iter().all(|cue| cue.reduced_motion_safe));
-    assert!(
-        cues.iter()
-            .any(|cue| cue.kind == EffectKind::SuccessGradient)
-    );
-    assert!(!cues.iter().any(|cue| cue.kind == EffectKind::Sweep));
-    assert!(!cues.iter().any(|cue| cue.kind == EffectKind::Reveal));
-    assert!(!cues.iter().any(|cue| cue.kind == EffectKind::Flicker));
+    assert!(cues.contains(&Cue::CorrectGlow));
+    assert!(!cues.contains(&Cue::TitleSweep));
+    assert!(!cues.contains(&Cue::PromptReveal));
+    assert!(!cues.contains(&Cue::IncorrectFlicker));
 }
 
 #[test]
@@ -67,14 +64,18 @@ fn profile_round_trips_progress_and_weak_topics() {
     let dir = assert_fs::TempDir::new().expect("temp dir");
     let path = dir.path().join("profile.toml");
     let mut profile = Profile::default();
-    profile
-        .completed_objectives
-        .push("state-location".to_string());
+    profile.record_objective(Cabinet::ShellMotel, "state-location", 110, 1, 1);
     profile.weak_topics.push("paths".to_string());
 
     profile.save_to(&path).expect("save profile");
     let loaded = Profile::load_from(&path).expect("load profile");
 
-    assert_eq!(loaded.completed_objectives, vec!["state-location"]);
+    assert!(
+        loaded
+            .cabinet_progress(Cabinet::ShellMotel)
+            .expect("shell progress")
+            .completed_objectives
+            .contains("state-location")
+    );
     assert_eq!(loaded.weak_topics, vec!["paths"]);
 }

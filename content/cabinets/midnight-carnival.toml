@@ -1,0 +1,32 @@
+[cabinet]
+id = "midnight-carnival"
+display_name = "Midnight Carnival"
+tagline = "find the lost logs"
+glyph = "\u25CE"
+genre = "ops_sim"
+
+[cabinet.theme]
+accent_primary = "#c9ffb3"
+accent_secondary = "#ffe8a3"
+
+[[chapters]]
+id = "lost-terminal"
+title = "Lost Terminal"
+
+[[chapters.incidents]]
+id = "moonbase-misfile"
+title = "Moonbase Helpdesk"
+prompt = "Astronauts saved the report in plain sight. Prove where you are, list files, then read it."
+objective = { id = "ops-orientation", prompt = "State your location.", success = "Moonbase coordinates accepted.", hints = ["Start with `pwd`."], validator = { type = "ExactCommand", expected = "pwd" } }
+
+[[chapters.incidents]]
+id = "moonbase-listing"
+title = "Moonbase Helpdesk"
+prompt = "List the moonbase files."
+objective = { id = "ops-list-files", prompt = "List what is here.", success = "The report blinks in the dust.", hints = ["Use `ls`."], validator = { type = "ExactCommand", expected = "ls" } }
+
+[[chapters.incidents]]
+id = "moonbase-report"
+title = "Moonbase Helpdesk"
+prompt = "Read the misplaced report."
+objective = { id = "ops-read-report", prompt = "Read report.txt.", success = "Incident complete: the moonbase report has been inspected.", hints = ["Use `cat report.txt`."], validator = { type = "ExactCommand", expected = "cat report.txt" } }

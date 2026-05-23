@@ -183,15 +183,32 @@ impl Sandbox {
     }
 
     pub fn run_command(&self, command: &str) -> anyhow::Result<ShellOutput> {
-        let output = Command::new("sh")
-            .arg("-c")
-            .arg(command)
-            .current_dir(self.root())
-            .output()?;
+        let mut process = shell_command(command);
+        let output = process.current_dir(self.root()).output()?;
         Ok(ShellOutput {
             status: output.status.code().unwrap_or(1),
             stdout: String::from_utf8_lossy(&output.stdout).to_string(),
             stderr: String::from_utf8_lossy(&output.stderr).to_string(),
         })
     }
+}
+
+#[cfg(windows)]
+fn shell_command(command: &str) -> Command {
+    let mut process = Command::new("powershell.exe");
+    process
+        .arg("-NoProfile")
+        .arg("-NonInteractive")
+        .arg("-ExecutionPolicy")
+        .arg("Bypass")
+        .arg("-Command")
+        .arg(command);
+    process
+}
+
+#[cfg(not(windows))]
+fn shell_command(command: &str) -> Command {
+    let mut process = Command::new("sh");
+    process.arg("-c").arg(command);
+    process
 }

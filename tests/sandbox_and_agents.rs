@@ -1,6 +1,7 @@
 use bashcards::app::App;
+use bashcards::arcade::Cabinet;
 use bashcards::content::ContentLibrary;
-use bashcards::game::{AttemptOutcome, Mode};
+use bashcards::game::AttemptOutcome;
 use bashcards::settings::{Difficulty, Settings};
 use bashcards::shell::Sandbox;
 use bashcards::shell::{CommandWorld, run_guided};
@@ -46,17 +47,21 @@ fn guided_shell_simulates_beginner_commands_without_touching_user_filesystem() {
 fn simulated_agents_complete_all_three_beginner_modes_end_to_end() {
     let scripts = [
         (
-            Mode::EscapeRoom,
+            Cabinet::ShellMotel,
             vec!["pwd", "ls", "cd lobby", "cat README"],
         ),
-        (Mode::Dojo, vec!["pwd", "ls", "cat README"]),
-        (Mode::OpsSim, vec!["pwd", "ls", "cat report.txt"]),
+        (Cabinet::MonasteryOfForms, vec!["pwd", "ls", "cat README"]),
+        (
+            Cabinet::MidnightCarnival,
+            vec!["pwd", "ls", "cat report.txt"],
+        ),
     ];
 
-    for (mode, commands) in scripts {
-        let content = ContentLibrary::bundled().expect("bundled content");
-        let mut app = App::launch_mode(content, mode, Difficulty::Beginner, Settings::default())
-            .expect("launch mode");
+    for (cabinet, commands) in scripts {
+        let content = ContentLibrary::bundled_for(cabinet).expect("bundled content");
+        let mut app =
+            App::launch_cabinet(content, cabinet, Difficulty::Beginner, Settings::default())
+                .expect("launch cabinet");
 
         for command in commands {
             let outcome = app.submit_command(command);
@@ -66,6 +71,6 @@ fn simulated_agents_complete_all_three_beginner_modes_end_to_end() {
             }
         }
 
-        assert!(app.session().completed(), "{mode:?} did not complete");
+        assert!(app.session().completed(), "{cabinet:?} did not complete");
     }
 }

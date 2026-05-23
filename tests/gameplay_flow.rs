@@ -1,14 +1,15 @@
 use bashcards::app::App;
+use bashcards::arcade::Cabinet;
 use bashcards::content::ContentLibrary;
-use bashcards::game::{AttemptOutcome, Mode};
+use bashcards::game::AttemptOutcome;
 use bashcards::settings::{Difficulty, PressureProfile, Settings};
 
 #[test]
 fn beginner_escape_room_teaches_orientation_listing_movement_and_inspection() {
-    let content = ContentLibrary::bundled().expect("bundled content");
-    let mut app = App::launch_mode(
+    let content = ContentLibrary::bundled_for(Cabinet::ShellMotel).expect("bundled content");
+    let mut app = App::launch_cabinet(
         content,
-        Mode::EscapeRoom,
+        Cabinet::ShellMotel,
         Difficulty::Beginner,
         Settings::default(),
     )
@@ -61,11 +62,18 @@ fn beginner_escape_room_teaches_orientation_listing_movement_and_inspection() {
 
 #[test]
 fn pressure_profiles_change_scoring_without_blocking_beginner_completion() {
-    let mut settings = Settings::default();
-    settings.pressure = PressureProfile::CozyNoTimer;
-    let content = ContentLibrary::bundled().expect("bundled content");
-    let mut app =
-        App::launch_mode(content, Mode::Dojo, Difficulty::Beginner, settings).expect("launch dojo");
+    let settings = Settings {
+        pressure: PressureProfile::CozyNoTimer,
+        ..Settings::default()
+    };
+    let content = ContentLibrary::bundled_for(Cabinet::MonasteryOfForms).expect("bundled content");
+    let mut app = App::launch_cabinet(
+        content,
+        Cabinet::MonasteryOfForms,
+        Difficulty::Beginner,
+        settings,
+    )
+    .expect("launch dojo");
 
     assert!(matches!(
         app.submit_command("pwd"),
@@ -73,11 +81,18 @@ fn pressure_profiles_change_scoring_without_blocking_beginner_completion() {
     ));
     assert_eq!(app.session().score(), 100);
 
-    let mut arcade = Settings::default();
-    arcade.pressure = PressureProfile::ArcadePressure;
-    let content = ContentLibrary::bundled().expect("bundled content");
-    let mut app =
-        App::launch_mode(content, Mode::Dojo, Difficulty::Beginner, arcade).expect("launch dojo");
+    let arcade = Settings {
+        pressure: PressureProfile::ArcadePressure,
+        ..Settings::default()
+    };
+    let content = ContentLibrary::bundled_for(Cabinet::MonasteryOfForms).expect("bundled content");
+    let mut app = App::launch_cabinet(
+        content,
+        Cabinet::MonasteryOfForms,
+        Difficulty::Beginner,
+        arcade,
+    )
+    .expect("launch dojo");
 
     assert!(matches!(
         app.submit_command("pwd"),
@@ -92,9 +107,14 @@ fn dojo_tracks_streaks_missed_cards_and_session_length() {
         session_length_target: 3,
         ..Settings::default()
     };
-    let content = ContentLibrary::bundled().expect("bundled content");
-    let mut app =
-        App::launch_mode(content, Mode::Dojo, Difficulty::Beginner, settings).expect("launch dojo");
+    let content = ContentLibrary::bundled_for(Cabinet::MonasteryOfForms).expect("bundled content");
+    let mut app = App::launch_cabinet(
+        content,
+        Cabinet::MonasteryOfForms,
+        Difficulty::Beginner,
+        settings,
+    )
+    .expect("launch dojo");
 
     assert!(matches!(
         app.submit_command("pwd"),
@@ -114,10 +134,10 @@ fn dojo_tracks_streaks_missed_cards_and_session_length() {
 
 #[test]
 fn dojo_clean_path_completes_with_full_streak_and_no_missed_cards() {
-    let content = ContentLibrary::bundled().expect("bundled content");
-    let mut app = App::launch_mode(
+    let content = ContentLibrary::bundled_for(Cabinet::MonasteryOfForms).expect("bundled content");
+    let mut app = App::launch_cabinet(
         content,
-        Mode::Dojo,
+        Cabinet::MonasteryOfForms,
         Difficulty::Beginner,
         Settings::default(),
     )
@@ -137,10 +157,10 @@ fn dojo_clean_path_completes_with_full_streak_and_no_missed_cards() {
 
 #[test]
 fn operator_ops_sim_starts_with_real_sandbox_infrastructure() {
-    let content = ContentLibrary::bundled().expect("bundled content");
-    let app = App::launch_mode(
+    let content = ContentLibrary::bundled_for(Cabinet::MidnightCarnival).expect("bundled content");
+    let app = App::launch_cabinet(
         content,
-        Mode::OpsSim,
+        Cabinet::MidnightCarnival,
         Difficulty::Operator,
         Settings::default(),
     )
@@ -154,10 +174,10 @@ fn operator_ops_sim_starts_with_real_sandbox_infrastructure() {
 
 #[test]
 fn operator_ops_sim_can_run_commands_inside_sandbox_and_record_output() {
-    let content = ContentLibrary::bundled().expect("bundled content");
-    let mut app = App::launch_mode(
+    let content = ContentLibrary::bundled_for(Cabinet::MidnightCarnival).expect("bundled content");
+    let mut app = App::launch_cabinet(
         content,
-        Mode::OpsSim,
+        Cabinet::MidnightCarnival,
         Difficulty::Operator,
         Settings::default(),
     )
@@ -178,11 +198,65 @@ fn operator_ops_sim_can_run_commands_inside_sandbox_and_record_output() {
 }
 
 #[test]
-fn beginner_ops_sim_reads_report_from_simulated_world() {
-    let content = ContentLibrary::bundled().expect("bundled content");
-    let mut app = App::launch_mode(
+fn operator_sandbox_commands_do_not_overwrite_saved_cabinet_progress() {
+    let dir = assert_fs::TempDir::new().expect("temp dir");
+    let profile_path = dir.path().join("profile.toml");
+    let content = ContentLibrary::bundled_for(Cabinet::MidnightCarnival).expect("bundled content");
+    let mut beginner = App::launch_cabinet_with_profile_path(
         content,
-        Mode::OpsSim,
+        Cabinet::MidnightCarnival,
+        Difficulty::Beginner,
+        Settings::default(),
+        profile_path.clone(),
+    )
+    .expect("launch beginner ops");
+
+    for command in ["pwd", "ls", "cat report.txt"] {
+        assert!(matches!(
+            beginner.submit_command(command),
+            AttemptOutcome::Correct { .. }
+        ));
+    }
+
+    let before = bashcards::profile::Profile::load_from(&profile_path)
+        .expect("profile saved")
+        .cabinet_progress(Cabinet::MidnightCarnival)
+        .expect("carnival progress")
+        .clone();
+
+    let content = ContentLibrary::bundled_for(Cabinet::MidnightCarnival).expect("bundled content");
+    let mut operator = App::launch_cabinet_with_profile_path(
+        content,
+        Cabinet::MidnightCarnival,
+        Difficulty::Operator,
+        Settings::default(),
+        profile_path.clone(),
+    )
+    .expect("launch operator ops");
+
+    assert!(matches!(
+        operator.submit_command("!cat report.txt"),
+        AttemptOutcome::Correct { .. }
+    ));
+
+    let after = bashcards::profile::Profile::load_from(&profile_path)
+        .expect("profile saved")
+        .cabinet_progress(Cabinet::MidnightCarnival)
+        .expect("carnival progress")
+        .clone();
+
+    assert_eq!(after.score, before.score);
+    assert_eq!(after.streak, before.streak);
+    assert_eq!(after.attempts, before.attempts);
+    assert_eq!(after.completed_objectives, before.completed_objectives);
+}
+
+#[test]
+fn beginner_ops_sim_reads_report_from_simulated_world() {
+    let content = ContentLibrary::bundled_for(Cabinet::MidnightCarnival).expect("bundled content");
+    let mut app = App::launch_cabinet(
+        content,
+        Cabinet::MidnightCarnival,
         Difficulty::Beginner,
         Settings::default(),
     )
@@ -205,10 +279,10 @@ fn beginner_ops_sim_reads_report_from_simulated_world() {
 
 #[test]
 fn app_records_completed_objectives_in_profile() {
-    let content = ContentLibrary::bundled().expect("bundled content");
-    let mut app = App::launch_mode(
+    let content = ContentLibrary::bundled_for(Cabinet::ShellMotel).expect("bundled content");
+    let mut app = App::launch_cabinet(
         content,
-        Mode::EscapeRoom,
+        Cabinet::ShellMotel,
         Difficulty::Beginner,
         Settings::default(),
     )
@@ -219,17 +293,23 @@ fn app_records_completed_objectives_in_profile() {
         AttemptOutcome::Correct { .. }
     ));
 
-    assert_eq!(app.profile().completed_objectives, vec!["state-location"]);
+    assert!(
+        app.profile()
+            .cabinet_progress(Cabinet::ShellMotel)
+            .expect("shell progress")
+            .completed_objectives
+            .contains("state-location")
+    );
 }
 
 #[test]
 fn app_persists_profile_progress_when_profile_path_is_configured() {
     let dir = assert_fs::TempDir::new().expect("temp dir");
     let profile_path = dir.path().join("profile.toml");
-    let content = ContentLibrary::bundled().expect("bundled content");
-    let mut app = App::launch_mode_with_profile_path(
+    let content = ContentLibrary::bundled_for(Cabinet::ShellMotel).expect("bundled content");
+    let mut app = App::launch_cabinet_with_profile_path(
         content,
-        Mode::EscapeRoom,
+        Cabinet::ShellMotel,
         Difficulty::Beginner,
         Settings::default(),
         profile_path.clone(),
@@ -242,5 +322,11 @@ fn app_persists_profile_progress_when_profile_path_is_configured() {
     ));
 
     let loaded = bashcards::profile::Profile::load_from(&profile_path).expect("profile saved");
-    assert_eq!(loaded.completed_objectives, vec!["state-location"]);
+    assert!(
+        loaded
+            .cabinet_progress(Cabinet::ShellMotel)
+            .expect("shell progress")
+            .completed_objectives
+            .contains("state-location")
+    );
 }
